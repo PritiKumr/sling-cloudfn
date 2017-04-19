@@ -8,19 +8,30 @@ admin.initializeApp(functions.config().firebase);
 exports.sendPushNotification = functions.https.onRequest((req, res) => {
   const payload = {
     notification: {
-      title: 'You slung a new link',
-      body: `http://google.com`
+      url: req.query.url
     }
   };
 
-  admin.messaging().sendToDevice([req.query.registrationId], payload).then(function(response) {
-    // See the MessagingDevicesResponse reference documentation for
-    // the contents of response.
-    console.log("Successfully sent message:", response);
-  })
-  .catch(function(error) {
-    console.log("Error sending message:", error);
-  });
+  admin
+    .database()
+    .ref("users/" + req.query.uid + "/readerDevices/")
+    .once("value", function(result) {
+      if(result.val()){
+        var deviceTokens = Object
+                            .keys(result.val())
+                            .map(function (instanceId) {
+                              return result.val()[instanceId].notificationToken;
+                            });
 
+        admin.messaging().sendToDevice(deviceTokens, payload).then(function(response) {
+          console.log("Successfully sent message:", response);
+        })
+        .catch(function(error) {
+          console.log("Error sending message:", error);
+        });
+
+
+      }
+    });
   res.status(200).end();
 });
