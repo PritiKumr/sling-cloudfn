@@ -8,7 +8,8 @@ admin.initializeApp(functions.config().firebase);
 exports.sendPushNotification = functions.https.onRequest((req, res) => {
   const payload = {
     notification: {
-      url: req.query.url
+      url: req.query.url,
+      click_action: req.query.url
     }
   };
 
